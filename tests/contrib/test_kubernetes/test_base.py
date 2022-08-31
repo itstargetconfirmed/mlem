@@ -2,6 +2,7 @@ import os
 import tempfile
 import time
 
+import numpy as np
 import pytest
 from kubernetes import config
 from sklearn.datasets import load_iris
@@ -75,7 +76,10 @@ def test_deploy(
     assert k8s_env.get_status(k8s_deployment) == DeployStatus.NOT_DEPLOYED
     k8s_env.deploy(k8s_deployment)
     k8s_deployment.wait_for_status(
-        DeployStatus.RUNNING, allowed_intermediate=[DeployStatus.STARTING]
+        DeployStatus.RUNNING,
+        allowed_intermediate=[DeployStatus.STARTING],
+        timeout=10,
+        times=5,
     )
     time.sleep(5)
     assert k8s_env.get_status(k8s_deployment) == DeployStatus.RUNNING
@@ -84,20 +88,18 @@ def test_deploy(
     assert k8s_env.get_status(k8s_deployment) == DeployStatus.NOT_DEPLOYED
     with k8s_env.daemon.client() as client:
         k8s_deployment_state.image.delete(client, force=True)
+    time.sleep(5)
 
 
 def test_deployed_service(
     load_kube_config, k8s_deployment, k8s_deployment_state, k8s_env
 ):
+    time.sleep(15)
     k8s_deployment.update_state(k8s_deployment_state)
     k8s_env.deploy(k8s_deployment)
-    cmd = Command("minikube service ml -n mlem-ml-app")
-    cmd.run(timeout=5, shell=True)
+    cmd = Command("minikube tunnel")
+    cmd.run(timeout=20, shell=True)
     client = k8s_deployment.get_client()
     train, _ = load_iris(return_X_y=True)
-    response = client.post(
-        f"/{PREDICT_METHOD_NAME}",
-        json={"data": train},
-    )
-    assert response.status_code == 200, response.text
-    assert response.json() == [0] * 50 + [1] * 50 + [2] * 50
+    response = client.predict(data=train)
+    assert np.array_equal(response, np.array([0] * 50 + [1] * 50 + [2] * 50))
