@@ -8,7 +8,6 @@ from kubernetes import config
 from sklearn.datasets import load_iris
 
 from mlem.config import project_config
-from mlem.constants import PREDICT_METHOD_NAME
 from mlem.contrib.docker.base import DockerDaemon, DockerEnv
 from mlem.contrib.docker.helpers import build_model_image
 from mlem.contrib.kubernetes.base import (
@@ -17,8 +16,8 @@ from mlem.contrib.kubernetes.base import (
     K8sEnv,
 )
 from mlem.core.objects import DeployStatus
-
-from .utils import Command
+from tests.contrib.test_kubernetes.conftest import k8s_test
+from tests.contrib.test_kubernetes.utils import Command
 
 
 @pytest.fixture
@@ -69,8 +68,12 @@ def k8s_env():
     )
 
 
+@k8s_test
 def test_deploy(
-    load_kube_config, k8s_deployment, k8s_deployment_state, k8s_env
+    load_kube_config,  # pylint: disable=unused-argument
+    k8s_deployment,
+    k8s_deployment_state,
+    k8s_env,
 ):
     k8s_deployment.update_state(k8s_deployment_state)
     assert k8s_env.get_status(k8s_deployment) == DeployStatus.NOT_DEPLOYED
@@ -91,8 +94,12 @@ def test_deploy(
     time.sleep(5)
 
 
+@k8s_test
 def test_deployed_service(
-    load_kube_config, k8s_deployment, k8s_deployment_state, k8s_env
+    load_kube_config,  # pylint: disable=unused-argument
+    k8s_deployment,
+    k8s_deployment_state,
+    k8s_env,
 ):
     time.sleep(15)
     k8s_deployment.update_state(k8s_deployment_state)

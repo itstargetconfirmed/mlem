@@ -67,6 +67,9 @@ jobs:
     - uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python }}
+    - name: Start minikube
+      id: minikube
+      uses: medyagh/setup-minikube@latest
     - name: get pip cache dir
       id: pip-cache-dir
       run: |
@@ -94,7 +97,7 @@ jobs:
       if: matrix.python != '3.7'
     - name: Run tests
       timeout-minutes: 40
-      run: pytest --ignore tests/contrib/test_kubernetes/test_base.py
+      run: pytest
       env:
         GITHUB_USERNAME: ${{ secrets.GH_USERNAME }}
         GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -111,35 +114,6 @@ jobs:
       with:
         fail_ci_if_error: true
         token: ${{ secrets.CODECOV_TOKEN }}
-  test-kubernetes:
-    name: Test deployment to Kubernetes
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v4
-      with:
-        python-version: "3.9"
-    - name: Install
-      run: |
-        pip install --upgrade pip setuptools wheel
-        pip install pre-commit .[tests]
-    - name: Start minikube
-      uses: medyagh/setup-minikube@master
-    - name: Set env variables and Run K8s tests
-      run: |
-        eval $(minikube -p minikube docker-env)
-        pytest tests/contrib/test_kubernetes/test_base.py
-      env:
-        GITHUB_USERNAME: ${{ secrets.GH_USERNAME }}
-        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-        HEROKU_TEAM: iterative-sandbox
-        GITHUB_MATRIX_OS: ubuntu-latest
-        GITHUB_MATRIX_PYTHON: "3.9"
-        BITBUCKET_USERNAME: ${{ secrets.BITBUCKET_USERNAME }}
-        BITBUCKET_PASSWORD: ${{ secrets.BITBUCKET_PASSWORD }}
   deploy:
     name: PyPI Deploy
     needs: [check, test]
