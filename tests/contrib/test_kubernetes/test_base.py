@@ -1,4 +1,6 @@
 import os
+import re
+import subprocess
 import tempfile
 import time
 
@@ -21,6 +23,17 @@ from tests.contrib.test_kubernetes.utils import Command
 
 
 @pytest.fixture
+def minikube_env_variables():
+    output = subprocess.check_output(
+        ["minikube", "-p", "minikube", "docker-env"]
+    )
+    export_re = re.compile('export ([A-Z\_]+)="(.*)"\\n')
+    export_pairs = export_re.findall(output.decode("UTF-8"))
+    for k, v in export_pairs:
+        os.environ[k] = v
+
+
+@pytest.fixture
 def load_kube_config():
     config.load_kube_config(os.getenv("KUBECONFIG", default="~/.kube/config"))
 
@@ -36,7 +49,7 @@ def k8s_deployment(model_meta_saved_single):
 
 
 @pytest.fixture
-def docker_image(k8s_deployment):
+def docker_image(minikube_env_variables, k8s_deployment):
     tmpdir = tempfile.mkdtemp()
     k8s_deployment.dump(os.path.join(tmpdir, "deploy"))
     return build_model_image(

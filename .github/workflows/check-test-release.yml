@@ -102,9 +102,7 @@ jobs:
       if: matrix.python != '3.7'
     - name: Run tests
       timeout-minutes: 40
-      run: |
-        eval $(minikube -p minikube docker-env)
-        pytest
+      run: pytest
       env:
         GITHUB_USERNAME: ${{ secrets.GH_USERNAME }}
         GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
