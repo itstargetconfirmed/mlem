@@ -27,7 +27,7 @@ def minikube_env_variables():
     output = subprocess.check_output(
         ["minikube", "-p", "minikube", "docker-env"]
     )
-    export_re = re.compile('export ([A-Z\_]+)="(.*)"\\n')
+    export_re = re.compile('export ([A-Z\_]+)="(.*)"\\n')  # noqa: W605
     export_pairs = export_re.findall(output.decode("UTF-8"))
     for k, v in export_pairs:
         os.environ[k] = v
