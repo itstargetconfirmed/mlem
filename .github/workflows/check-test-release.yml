@@ -69,7 +69,11 @@ jobs:
         python-version: ${{ matrix.python }}
     - name: Start minikube
       id: minikube
-      uses: medyagh/setup-minikube@latest
+      uses: manusa/actions-setup-minikube@v2.7.0
+      with:
+        minikube version: 'v1.26.1'
+        kubernetes version: 'v1.25.0'
+        github token: ${{ secrets.GITHUB_TOKEN }}
     - name: get pip cache dir
       id: pip-cache-dir
       run: |
